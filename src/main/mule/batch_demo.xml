@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d1bed206-6816-4511-8ba0-137c7daba7e1" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="batch_demoFlow" doc:id="f4905077-0e8a-4d3a-a7a3-b9f41b6b01d3" >
+		<http:listener doc:name="post /batch" doc:id="0b1d7057-6669-4475-afc7-8ee7cf2fc0f3" config-ref="HTTP_Listener_config" path="/batch" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Before ForEach" doc:id="ce1f6b2d-23f9-442d-91f9-38501e884ec3" message='#["Before ForEach"]'/>
+		<logger level="INFO" doc:name="Before ForEach" doc:id="aefd96e4-0718-42c2-833f-79ca94b0d65f" message="#[payload]"/>
+		<batch:job jobName="batch_demoBatch_Job" doc:id="5df1cb3d-322c-4f96-bc76-0a2431b35c66" blockSize="20" schedulingStrategy="ROUND_ROBIN">
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="442948df-f968-4a37-a84d-30bd2fa30985" >
+					<logger level="INFO" doc:name="Inside ForEach loop" doc:id="5f928394-79a0-446a-addc-cde7ca0ddac1" message='#["Inside ForEach Loop" ++ payload]' />
+					<logger level="INFO" doc:name="Inside ForEach Loop" doc:id="d99c8e13-1c26-42ed-91b4-ca60538b2522" message="#[payload]" />
+					<scripting:execute engine="groovy" doc:id="2e73f318-020c-4043-b6bf-b05526cb26d4" >
+						<scripting:code ><![CDATA[sleep(1000)]]></scripting:code>
+					</scripting:execute>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="876fff66-ca51-43bf-b292-b826e49ec131" >
+						<ee:transform doc:name="Transform Message" doc:id="cbcd4e79-2d9b-439d-af5e-9d391d533da6" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+		<ee:transform doc:name="Transform Message" doc:id="690d2df8-9fa0-4a69-b485-e6ce002dd93c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="OutsideForEach" doc:id="c17aa77d-9f37-4cb2-97c7-797fc38e61a0" message='#["OutsideForEach"]'/>
+		<logger level="INFO" doc:name="OutSide ForEachLoop" doc:id="3f3e9486-c2b5-43a0-a8d6-cb80c9f8d563" message='#[payload]'/>
+	</flow>
+</mule>
